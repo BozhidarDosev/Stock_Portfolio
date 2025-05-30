@@ -8,7 +8,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class StockApiService {
-    private static final String API_KEY = "1X1WGUD45L0N301Q";
+    private static final String API_KEY = "YdEcp8GdrEhLuI2YfiGonBW9PkOW9qTf";
 
     public static double getRealTimePrice(String symbol) {
         try {

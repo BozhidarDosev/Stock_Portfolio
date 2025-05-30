@@ -34,17 +34,35 @@ public class DatabaseManager {
     }
 
     public void addStock(String symbol, int quantity, double price) {
-        String sql = "INSERT INTO stocks (symbol, quantity, price) VALUES (?, ?, ?)";
+        String selectSql = "SELECT quantity FROM stocks WHERE symbol = ?";
         try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, symbol);
-            pstmt.setInt(2, quantity);
-            pstmt.setDouble(3, price);
-            pstmt.executeUpdate();
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+            selectStmt.setString(1, symbol);
+            ResultSet rs = selectStmt.executeQuery();
+            if (rs.next()) {
+                // Stock exists: update quantity
+                int existingQty = rs.getInt("quantity");
+                String updateSql = "UPDATE stocks SET quantity = ? WHERE symbol = ?";
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                    updateStmt.setInt(1, existingQty + quantity);
+                    updateStmt.setString(2, symbol);
+                    updateStmt.executeUpdate();
+                }
+            } else {
+                // New stock: insert a row
+                String insertSql = "INSERT INTO stocks (symbol, quantity, price) VALUES (?, ?, ?)";
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                    insertStmt.setString(1, symbol);
+                    insertStmt.setInt(2, quantity);
+                    insertStmt.setDouble(3, price);
+                    insertStmt.executeUpdate();
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     public List<String> getAllStocks() {
         List<String> stocks = new ArrayList<>();
@@ -65,4 +83,20 @@ public class DatabaseManager {
         }
         return stocks;
     }
+
+    public void deleteStock(String symbol) {
+        String sql = "DELETE FROM stocks WHERE symbol = ?";
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, symbol);
+            int rows = stmt.executeUpdate();
+            if (rows == 0) {
+                // Optionally inform if no row was deleted
+                System.out.println("No stock with symbol " + symbol + " found.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
